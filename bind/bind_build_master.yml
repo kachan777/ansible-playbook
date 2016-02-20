@@ -1,0 +1,10 @@
+- hosts: dns
+  user: root
+  handlers:
+  - name: restart bind
+    service: name=named state=restarted
+
+  tasks:
+# - include: no_need_services.yml
+# - include: reboot.yml
+  - include: bind_install.yml

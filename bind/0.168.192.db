@@ -1,0 +1,17 @@
+$TTL 86400
+@   IN  SOA     ns1.enrise.local. root.enrise.local. (
+        2016020101  ;Serial
+        3600        ;Refresh
+        1800        ;Retry
+        604800      ;Expire
+        86400       ;Minimum TTL
+)
+
+        IN  NS      ns1.enrise.local.
+
+
+        IN  PTR     enrise.local.
+        IN  A       255.255.0.0
+
+
+2      IN  PTR     www.enrise.local

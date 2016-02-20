@@ -1,0 +1,28 @@
+#- name: IPv6 off
+#  lineinfile:
+#    dest=/etc/sysconfig/named 
+#    line='OPTIONS="-4"'
+
+- name: install bind
+  yum: name={{item}} state=installed
+  with_items:
+    - bind
+   #- bind-util
+
+- name: copy 
+  copy:
+    src=/home/ansible/playbook/bind/enrise.local.lan
+    dest=/var/named/enrise.local.lan
+  notify: restart bind
+
+- name: copy 
+  copy:
+    src=/home/ansible/playbook/bind/0.168.192.db
+    dest=/var/named/0.168.192.db
+  notify: restart bind
+
+- name: copy 
+  copy:
+    src=/home/ansible/playbook/bind/named.conf
+    dest=/etc/named.conf
+  notify: restart bind

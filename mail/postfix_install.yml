@@ -1,0 +1,98 @@
+# referring page: http://centos.server-manual.com/centos5_postfix.html
+
+- hosts: mail
+  user: root
+  
+#  vars:
+#    item:
+#      - { regexp: '#myhostname', line: 'myhostname = mail.enrise.local.com' }
+#      - { regexp: '#mydomain', line: 'mydomain = enrise.local.com' }
+#      - { regexp: '#myorigin', line: 'myorigin = $mydomain' }
+#      - { regexp: 'inet_interfaces', line: 'inet_interfaces = all' }
+#      - { regexp: 'mydestination', line: 'mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain' }
+#      - { regexp: '#relay_domains', line: 'relay_domains = $mydestination' }
+#      - { regexp: '#home_mailbox', line: 'home_mailbox = Maildir/' }
+#
+#    insert:
+#      - '# Cyrus-SASL configuration'
+#      - 'smtpd_sasl_auth_enable = yes'
+#      - 'smtpd_sasl_local_domain = $mydomain'
+#      - 'smtpd_sasl_security_options = noanonymous'
+#      - 'smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination'
+#      - 'broken_sasl_auth_clients = yes'
+
+  tasks:
+  - name: install postfix
+    yum: name=postfix state=installed
+
+  - name: install cyrus-sasl
+    yum: name=cyrus-sasl state=installed
+
+  - name: set main.cf
+    lineinfile:
+      dest=/etc/postfix/main.cf
+      backup=yes
+      regexp="{{item.regexp}}"
+      line="{{item.line}}"
+    with_items:
+      - { regexp: '#myhostname', line: 'myhostname = mail.enrise.local.com' }
+      - { regexp: '#mydomain', line: 'mydomain = enrise.local.com' }
+      - { regexp: '#myorigin', line: 'myorigin = $mydomain' }
+      - { regexp: 'inet_interfaces', line: 'inet_interfaces = all' }
+      - { regexp: 'mydestination', line: 'mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain' }
+      - { regexp: '#relay_domains', line: 'relay_domains = $mydestination' }
+      - { regexp: '#home_mailbox', line: 'home_mailbox = Maildir/' }
+    
+    lineinfile:
+      dest=/etc/postfix/main.cf
+      line="{{item}}"
+    with_items:
+      - '# Cyrus-SASL configuration'
+      - 'smtpd_sasl_auth_enable = yes'
+      - 'smtpd_sasl_local_domain = $mydomain'
+      - 'smtpd_sasl_security_options = noanonymous'
+      - 'smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination'
+      - 'broken_sasl_auth_clients = yes'
+
+  - name: set smtpd.conf for 64bit
+    lineinfile:
+      dest=/usr/lib64/sasl2/smtpd.conf
+      backup=yes
+      create=yes
+      regexp='pwcheck_method:'
+      line='pwcheck_method:auxprop'
+
+  - expect:
+      command: 'saslpasswd2 -c -u enrise.local.com dummy'
+      responses:
+        Password: 'dummy'
+        Again (for verification): 'dummy'
+
+  - file:
+      path=/etc/sasldb2
+      group=postfix
+      mode=0640
+
+  - file: path=/etc/skel/Maildir/new state=directory mode=0700 recurse=yes
+  - file: path=/etc/skel/Maildir/cur state=directory mode=0700 recurse=yes
+  - file: path=/etc/skel/Maildir/tmp state=directory mode=0700 recurse=yes
+
+  - service:
+      name=sendmail
+      state=stopped
+      enabled=no
+
+  - expect:
+      command: 'alternatives --config mta'
+      responses:
+        選択番号を入力します: '2'
+
+  - service:
+      name=saslauthd
+      state=started
+      enabled=yes
+
+  - service:
+      name=postfix
+      state=started
+      enabled=yes

@@ -1,0 +1,9 @@
+- hosts: localhost
+  tasks:
+  - name: Send notification message via Slack
+    local_action:
+      module: slack
+      domain: enrise-corporation.slack.com
+      token: T0J0JM2KS/B0LCGSH6C/QL4uvk8EypadGGq8sun1t27V
+      msg: "Hello! I'm Ansible."
+      channel: "#about-ansible"
