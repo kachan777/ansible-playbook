@@ -22,11 +22,18 @@
 #      - 'broken_sasl_auth_clients = yes'
 
   tasks:
-  - name: install postfix
-    yum: name=postfix state=installed
+  - name: install yum packages
+    yum: name={{ item }} state=latest
+    with_items:
+    - postfix
+    - cyrus-sasl
+    - python-setuptools
 
-  - name: install cyrus-sasl
-    yum: name=cyrus-sasl state=installed
+  - name: install easy_install package
+    easy_install: name=pip
+
+  - name: install pip package
+    pip: name=pexpect state=latest
 
   - name: set main.cf
     lineinfile:
@@ -65,8 +72,8 @@
   - expect:
       command: 'saslpasswd2 -c -u enrise.local.com dummy'
       responses:
-        Password: 'dummy'
-        Again (for verification): 'dummy'
+        'Password:': 'dummy'
+        'Again (for verification):': 'dummy'
 
   - file:
       path=/etc/sasldb2
